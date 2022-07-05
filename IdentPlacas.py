@@ -4,11 +4,11 @@ import os
 from random import randint
 import shutil
 import sys
-from resources.interface import Ui_IdentificacaodePlacas
 
 class Identificador():
 
     def render(self, file=None):
+        self.save = False
         if file == None:
             self.cap = cv2.VideoCapture(0)
 
@@ -27,7 +27,10 @@ class Identificador():
             for (x,y,w,h) in car_plates:
                 self.single_checker(x, y, w, h)
             
-            cv2.imshow('video-car', self.img)
+            cv2.imshow('Detectar Placas', self.img)
+            if cv2.waitKey(1) & 0xff == ord('s'):
+                self.save = True
+
             if cv2.waitKey(33) == 27:
                 break
         cv2.destroyAllWindows()
@@ -42,8 +45,16 @@ class Identificador():
             cv2.imwrite(temp_archive, self.plate)
             self.preProcessamentoRoi(temp_archive)
             string = self.reconhecimentoOCR(temp_archive).replace(' ', '')
-            if len(string) > 6 and len(string) < 10:
-                cv2.imwrite(f'output/{string}.png', self.plate)
+
+            if self.save == True:
+                self.save = False
+                if len(string) > 6 and len(string) < 10:
+                    cv2.imwrite(f'output/{string}.png', self.plate)
+
+                else:
+                    print('Impossivel identificar placa')
+                    self.save = True
+
             os.remove(temp_archive)
 
     def preProcessamentoRoi(self, file):
@@ -83,7 +94,7 @@ class Identificador():
         saida = pytesseract.image_to_string(img_roi_ocr, lang='eng', config=config)
 
 
-        print(saida, type(saida))
+        print(saida)
         return saida
     
     def clear_output(self):
